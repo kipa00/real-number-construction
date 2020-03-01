@@ -623,6 +623,40 @@ Definition real_mul (x : real) (y : real) :=
 
 Notation "x *| y" := (real_mul x y) (at level 40, left associativity).
 
+Lemma real_mul_wd : forall x y z, x =| y -> x *| z =| y *| z.
+Proof.
+  intros [f Hf] [g Hg] [h Hh] H. unfold real_mul in *; unfold real_eq in *;
+  unfold real_plus in *; unfold real_plus_inv in *. unfold seq_zero.
+  intros. destruct (cauchy_bounded _ Hh) as [M Hhb].
+  specialize (H (eps */ Rational (PosZ (P 0)) (P M))).
+  destruct H as [N Hn].
+  + apply -> rational_lt_pos in H0. destruct eps as [[[a] | | [a]] [b]];
+    try (inv H0; fail); clear. apply <- rational_lt_pos. simpl; trivial.
+  + exists N; intros. specialize (Hn n H). specialize (Hhb n).
+    assert (f n */ h n +/ --/ (g n */ h n) =/ (f n +/ --/ g n) */ h n). {
+      rsymm; rational_rw rational_dist_back.
+      rational_rw rational_plus_comm; rsymm; rational_rw rational_plus_comm.
+      apply -> rational_plus_wd. rational_rw rational_plus_inv_mul.
+      rational_rw rational_mul_assoc. apply rational_mul_wd.
+      rsymm; apply rational_plus_inv_mul.
+    } apply rational_abs_wd in H1. assert (eps =/
+      eps */ Rational (PosZ (P 0)) (P M) */ Rational (PosZ (P M)) (P 0)
+    ). {
+      apply -> rational_lt_pos in H0; destruct eps as [[[a] | | [a]] [b]];
+      inv H0. unfold rational_mul; simpl_int; try (simpl in *; int_contra).
+      unfold rational_eq; simpl_int; try (simpl in *; int_contra).
+      simpl_eq; nia.
+    } apply -> rational_lt_wd; try (rsymm; eassumption).
+    apply -> rational_lt_wd; try (rsymm; eapply rational_abs_mul);
+    try eapply rational_eq_refl. assert (
+      forall x, Rational Zero (P 0) <=/ rational_abs x
+    ). {
+      clear; intros [[[a] | | [a]] [b]]; unfold rational_abs;
+      unfold rational_le; unfold rational_plus; unfold rational_plus_inv;
+      simpl_int; simpl; eauto.
+    } apply rational_lt_mul_nonneg; try eassumption; apply H3.
+Qed.
+
 Lemma real_mul_comm : forall x y, x *| y =| y *| x.
 Proof.
   intros [f Hf] [g Hg]; unfold real_mul; unfold real_eq;
